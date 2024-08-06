@@ -1,0 +1,6 @@
+{
+  "ApiServerPort": 41451,
+  "LocalHostIp": "127.0.0.1",
+  "SimMode": "Multirotor",
+  "ViewMode": "Fpv"
+}
