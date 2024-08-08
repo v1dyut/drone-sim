@@ -16,6 +16,8 @@ import keyboard
 # https://microsoft.github.io/AirSim/settings/
 # https://microsoft.github.io/AirSim/api_docs/html/
 # https://github.com/boppreh/keyboard/blob/master/keyboard/_canonical_names.py
+# https://microsoft.github.io/AirSim/api_docs/html/_modules/airsim/client.html
+# https://github.com/Microsoft/AirSim/blob/main/docs/settings.md
 
 MINIMUM_DISTANCE = 2.0
 
@@ -42,8 +44,8 @@ class Simulation:
                                         120, drivetrain, 
                                         airsim.YawMode(False,0))
         
-    def rotate(self, angle: int):
-        self.client.rotateToYawAsync(yaw=angle).join()
+    def rotate(self, angle: float):
+        self.client.rotateToYawAsync(yaw=degrees(angle)).join()
         
     def getCurrentPosition(self) -> airsim.Vector3r:
         return self.client.getMultirotorState().kinematics_estimated.position
@@ -66,23 +68,29 @@ class Simulation:
         
     def moveUp(self, distance: float, velocity: int = 3) -> Future:
         position = self.getCurrentPosition()
-        return self.move(position.x_val, position.y_val, position.z_val - distance, velocity)
+        return self.move(position.x_val, position.y_val, position.z_val - distance, velocity, airsim.DrivetrainType.MaxDegreeOfFreedom)
         
     def moveDown(self, distance: float = 20, velocity: int = 5) -> Future:
         position = self.getCurrentPosition()
-        return self.move(position.x_val, position.y_val, position.z_val + distance, velocity)
+        return self.move(position.x_val, position.y_val, position.z_val + distance, velocity, airsim.DrivetrainType.MaxDegreeOfFreedom)
        
     def turnRight(self, degree: float = 15):
-        orientation = self.client.getMultirotorState().kinematics_estimated.orientation
-        self.rotate(orientation.x_val + degree)
+        self.client.rotateToYawAsync(yaw=90).join()
+        # orientation = self.client.getMultirotorState().kinematics_estimated.orientation.
+        # print(f"[Current orientation: w: {orientation.w_val} x: {orientation.x_val}, y: {orientation.y_val}, z: {orientation.z_val}]")
+        # self.rotate(orientation.z_val + radians(degree))
+        self.printPose()
         
     def turnLeft(self, degree: float = 15):
-        orientation = self.client.getMultirotorState().kinematics_estimated.orientation
-        self.rotate(orientation.x_val - degree)
+        self.client.rotateToYawAsync(yaw=-90).join()
+        # orientation = self.client.getMultirotorState().kinematics_estimated.orientation
+        # print(f"[Current orientation: w: {orientation.w_val} x: {orientation.x_val}, y: {orientation.y_val}, z: {orientation.z_val}]")
+        # self.rotate(orientation.z_val - radians(degree))
+        self.printPose()
         
     def printPose(self) -> None:
         pose = self.client.getMultirotorState().kinematics_estimated
-        print(f"[Position(n: {pose.position.x_val}, e: {pose.position.y_val}, d: {pose.position.z_val}, r: {pose.orientation.x_val})]")
+        print(f"[Position(n: {pose.position.x_val}, e: {pose.position.y_val}, d: {pose.position.z_val}, r: {pose.orientation.z_val})]")
 
 
 def keyboard_control(simulation: Simulation):
