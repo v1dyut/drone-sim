@@ -1,16 +1,24 @@
 # drone-sim
 DECO3801 Drone Simulation
 
-
 ## Installation instructions
-Create a new environment using -
-conda env create -f environment.yml
+create the venv -
+python -m venv dronesim
 
-Activate the environment
-conda activate dronesim
+windows -
+dronesim\Scripts\activate
 
-Add new packages with -
+mac linux -
+source dronesim/bin/activate
+
+pip install -r requirements.txt
+
+
+add new packages with
 pip install ...
 
-Update the environment file by running
-conda env export > environment.yml
+update the requirements.txt for others with
+pip freeze > requirements.txt
+
+
+

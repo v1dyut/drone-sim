@@ -1,3 +1,5 @@
 # Do not commit large models!
 **/models/*
 !**/models/*.gitkeep
+
+dronesim/
