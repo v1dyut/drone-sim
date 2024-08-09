@@ -1,5 +1,5 @@
 # ready to run example: PythonClient/multirotor/hello_drone.py
-from math import cos, degrees, e, radians, sin
+from math import atan2, cos, degrees, e, radians, sin
 from pydoc import cli
 
 import os
@@ -24,6 +24,7 @@ MINIMUM_DISTANCE = 2.0
 class Simulation:
     def __init__(self, client: airsim.MultirotorClient):
         self.client = client
+        self.yaw: float = 0
         
     """
     Explaining moveToPositionAsync():
@@ -45,7 +46,12 @@ class Simulation:
                                         airsim.YawMode(False,0))
         
     def rotate(self, angle: float):
-        self.client.rotateToYawAsync(yaw=degrees(angle)).join()
+        self.client.rotateToYawAsync(yaw=angle)
+        
+    def quaternionToYaw(self, quaternion) -> float:
+        siny_cosp = 2 * (quaternion.w_val * quaternion.z_val + quaternion.x_val * quaternion.y_val)
+        cosy_cosp = 1 - 2 * (quaternion.y_val * quaternion.y_val + quaternion.z_val * quaternion.z_val)
+        return atan2(siny_cosp, cosy_cosp)
         
     def getCurrentPosition(self) -> airsim.Vector3r:
         return self.client.getMultirotorState().kinematics_estimated.position
@@ -74,23 +80,17 @@ class Simulation:
         position = self.getCurrentPosition()
         return self.move(position.x_val, position.y_val, position.z_val + distance, velocity, airsim.DrivetrainType.MaxDegreeOfFreedom)
        
-    def turnRight(self, degree: float = 15):
-        self.client.rotateToYawAsync(yaw=90).join()
-        # orientation = self.client.getMultirotorState().kinematics_estimated.orientation.
-        # print(f"[Current orientation: w: {orientation.w_val} x: {orientation.x_val}, y: {orientation.y_val}, z: {orientation.z_val}]")
-        # self.rotate(orientation.z_val + radians(degree))
-        self.printPose()
+    def turnRight(self, degree: float = 10):
+        yaw = self.quaternionToYaw(self.client.getMultirotorState().kinematics_estimated.orientation)
+        self.rotate(degrees(yaw) + degree)
         
-    def turnLeft(self, degree: float = 15):
-        self.client.rotateToYawAsync(yaw=-90).join()
-        # orientation = self.client.getMultirotorState().kinematics_estimated.orientation
-        # print(f"[Current orientation: w: {orientation.w_val} x: {orientation.x_val}, y: {orientation.y_val}, z: {orientation.z_val}]")
-        # self.rotate(orientation.z_val - radians(degree))
-        self.printPose()
+    def turnLeft(self, degree: float = 10):
+        yaw = self.quaternionToYaw(self.client.getMultirotorState().kinematics_estimated.orientation)
+        self.rotate(degrees(yaw) - degree)
         
     def printPose(self) -> None:
         pose = self.client.getMultirotorState().kinematics_estimated
-        print(f"[Position(n: {pose.position.x_val}, e: {pose.position.y_val}, d: {pose.position.z_val}, r: {pose.orientation.z_val})]")
+        print(f"[Position(n: {pose.position.x_val}, e: {pose.position.y_val}, d: {pose.position.z_val}, r: {self.quaternionToYaw(pose.orientation)})]")
 
 
 def keyboard_control(simulation: Simulation):
